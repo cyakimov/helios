@@ -65,14 +65,12 @@ func proxy(conn net.Conn) {
 	tlsConn := tls.Client(remote, &tls.Config{
 		ServerName: "httpbin.org",
 	})
-	err = tlsConn.Handshake()
-	if err != nil {
+	if err = tlsConn.Handshake(); err != nil {
 		log.Error(err)
 		return
 	}
 
-	err = conn.SetDeadline(time.Now().Add(time.Duration(timeout) * time.Second))
-	if err != nil {
+	if err = conn.SetDeadline(time.Now().Add(time.Duration(timeout) * time.Second)); err != nil {
 		log.Debugf("Connection setTimeout error: %q", err)
 		return
 	}
