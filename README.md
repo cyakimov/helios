@@ -37,5 +37,5 @@ go mod download
 Run the program
 
 ```shell
-go run main.go
+go run .
 ```
