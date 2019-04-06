@@ -1,12 +1,20 @@
 package main
 
 import (
+	"context"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"strings"
 	"time"
 )
+
+type ReverseProxyConfig struct {
+	ConnectTimeout time.Duration
+	Timeout        time.Duration
+	IdleTimeout    time.Duration
+}
 
 func singleJoiningSlash(a, b string) string {
 	aslash := strings.HasSuffix(a, "/")
@@ -20,7 +28,7 @@ func singleJoiningSlash(a, b string) string {
 	return a + b
 }
 
-func NewProxy(target *url.URL) http.Handler {
+func NewSingleHostReverseProxy(target *url.URL, conf ReverseProxyConfig) http.Handler {
 	targetQuery := target.RawQuery
 	director := func(req *http.Request) {
 		req.URL.Scheme = target.Scheme
@@ -40,8 +48,21 @@ func NewProxy(target *url.URL) http.Handler {
 	return &httputil.ReverseProxy{
 		FlushInterval: 200 * time.Millisecond,
 		Transport: &http.Transport{
+			DialContext: func(ctx context.Context, network, addr string) (conn net.Conn, e error) {
+				// open conn
+				c, err := net.DialTimeout(network, addr, conf.ConnectTimeout)
+				if err != nil {
+					return c, err
+				}
+				// set read/write timeout
+				if err := c.SetDeadline(time.Now().Add(conf.Timeout)); err != nil {
+					return c, err
+				}
+
+				return c, err
+			},
 			TLSHandshakeTimeout:    10 * time.Second,
-			IdleConnTimeout:        30 * time.Second,
+			IdleConnTimeout:        conf.IdleTimeout,
 			MaxResponseHeaderBytes: 1 << 20,
 			DisableCompression:     true,
 		},
