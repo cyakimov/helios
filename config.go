@@ -40,7 +40,7 @@ type Upstream struct {
 }
 
 func (c *Upstream) UnmarshalYAML(unmarshal func(v interface{}) error) error {
-	buf := &struct {
+	buf := struct {
 		ConnectTimeout string `yaml:"connect_timeout"`
 		Name           string `yaml:"name"`
 		URL            string `yaml:"url"`
