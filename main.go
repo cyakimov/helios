@@ -35,7 +35,7 @@ func init() {
 
 func setupRoutes() *mux.Router {
 	router := mux.NewRouter()
-	upstreams := map[string]*http.Handler{}
+	upstreams := make(map[string]*http.Handler, len(config.Upstreams))
 
 	for _, up := range config.Upstreams {
 		upstreamURL, err := url.Parse(up.URL)
@@ -60,6 +60,7 @@ func setupRoutes() *mux.Router {
 
 			if up == nil {
 				log.Fatalf("Upstream %q for route %q not found", path.Upstream, route.Host)
+				break
 			}
 
 			h.PathPrefix(path.Path).Handler(*up)
