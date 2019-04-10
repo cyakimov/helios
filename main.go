@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"flag"
 	"fmt"
+	"github.com/cyakimov/helios/authentication"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
@@ -37,6 +38,20 @@ func setupRoutes() *mux.Router {
 	router := mux.NewRouter()
 	upstreams := make(map[string]*http.Handler, len(config.Upstreams))
 
+	oauth2conf := authentication.OAuth2Config{
+		ClientID:     config.Identity.ClientID,
+		ClientSecret: config.Identity.ClientSecret,
+		CallbackURL:  config.Identity.OAuth2.CallbackURL,
+		AuthURL:      config.Identity.OAuth2.AuthURL,
+		TokenURL:     config.Identity.OAuth2.TokenURL,
+		Domain:       config.Identity.OAuth2.Domain,
+	}
+
+	auth0 := authentication.NewAuth0Provider(oauth2conf)
+
+	router.PathPrefix("/.identity/callback").Handler(
+		authentication.CallbackHandler(auth0, config.JWT.SharedSecret, config.JWT.Expires))
+
 	for _, up := range config.Upstreams {
 		upstreamURL, err := url.Parse(up.URL)
 		if err != nil {
@@ -56,14 +71,19 @@ func setupRoutes() *mux.Router {
 		h := router.Host(route.Host)
 
 		for _, path := range route.HTTP.Paths {
-			up := upstreams[path.Upstream]
+			upstream := upstreams[path.Upstream]
 
-			if up == nil {
+			if upstream == nil {
 				log.Fatalf("Upstream %q for route %q not found", path.Upstream, route.Host)
 				break
 			}
 
-			h.PathPrefix(path.Path).Handler(*up)
+			if path.AuthEnabled {
+				h.PathPrefix(path.Path).Handler(authentication.Middleware(auth0, *upstream))
+			} else {
+				h.PathPrefix(path.Path).Handler(*upstream)
+			}
+
 		}
 	}
 
