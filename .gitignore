@@ -12,3 +12,4 @@
 *.out
 
 *.pem
+config.yaml
