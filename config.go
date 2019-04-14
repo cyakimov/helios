@@ -47,16 +47,15 @@ type Identity struct {
 	ClientID     string `yaml:"client_id"`
 	ClientSecret string `yaml:"client_secret"`
 	OAuth2       struct {
-		CallbackURL string `yaml:"callback_url"`
-		AuthURL     string `yaml:"auth_url"`
-		TokenURL    string `yaml:"token_url"`
-		Domain      string `yaml:"domain"`
+		AuthURL    string `yaml:"auth_url"`
+		TokenURL   string `yaml:"token_url"`
+		ProfileURL string `yaml:"profile_url"`
 	}
 }
 
 type JWT struct {
-	SharedSecret string
-	Expires      time.Duration
+	Secret  string
+	Expires time.Duration
 }
 
 func (c *Upstream) UnmarshalYAML(unmarshal func(v interface{}) error) error {
@@ -84,8 +83,8 @@ func (c *Upstream) UnmarshalYAML(unmarshal func(v interface{}) error) error {
 
 func (c *JWT) UnmarshalYAML(unmarshal func(v interface{}) error) error {
 	buf := struct {
-		SharedSecret string `yaml:"shared_secret"`
-		Expires      string `yaml:"expires"`
+		Secret  string `yaml:"secret"`
+		Expires string `yaml:"expires"`
 	}{}
 
 	if err := unmarshal(&buf); err != nil {
@@ -98,7 +97,7 @@ func (c *JWT) UnmarshalYAML(unmarshal func(v interface{}) error) error {
 	}
 
 	c.Expires = expires
-	c.SharedSecret = buf.SharedSecret
+	c.Secret = buf.Secret
 
 	return nil
 }

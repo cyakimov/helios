@@ -1,4 +1,4 @@
-package authentication
+package providers
 
 import (
 	"context"
@@ -11,19 +11,19 @@ import (
 )
 
 type Auth0Provider struct {
-	OAuth2Provider
-	oauth2 oauth2.Config
-	domain string
+	OAuth2
+	oauth2     oauth2.Config
+	profileURL string
 }
 
-func NewAuth0Provider(config OAuth2Config) OAuth2Provider {
+func NewAuth0Provider(config OAuth2Config) OAuth2 {
 	return Auth0Provider{
-		domain: config.Domain,
+		profileURL: config.ProfileURL,
 		oauth2: oauth2.Config{
 			ClientID:     config.ClientID,
 			ClientSecret: config.ClientSecret,
-			RedirectURL:  config.CallbackURL,
 			Scopes:       []string{"openid", "email_verified", "email"},
+			RedirectURL:  "", // RedirectURL can vary per route host
 			Endpoint: oauth2.Endpoint{
 				AuthURL:  config.AuthURL,
 				TokenURL: config.TokenURL,
@@ -36,14 +36,20 @@ func (provider Auth0Provider) GetUserProfile(r *http.Request) (OIDCProfile, erro
 	var profile OIDCProfile
 	code := r.URL.Query().Get("code")
 
-	token, err := provider.oauth2.Exchange(context.TODO(), code)
+	// Auth0 requires callback URL
+	url := "https://" + r.Host + "/" + r.URL.Path
+	callback := oauth2.SetAuthURLParam("redirect_uri", url)
+
+	// get access token
+	token, err := provider.oauth2.Exchange(context.TODO(), code, callback)
 	if err != nil {
+		log.Error(err)
 		return profile, ErrCodeExchange
 	}
 
-	// Get user profile
+	// get user profile
 	client := provider.oauth2.Client(context.TODO(), token)
-	resp, err := client.Get(provider.domain + "/userinfo")
+	resp, err := client.Get(provider.profileURL)
 	if err != nil {
 		return profile, ErrProfile
 	}
@@ -67,7 +73,10 @@ func (provider Auth0Provider) GetUserProfile(r *http.Request) (OIDCProfile, erro
 	return profile, nil
 }
 
-func (provider Auth0Provider) GetLoginURL(state string) string {
+func (provider Auth0Provider) GetLoginURL(callbackURL string, state string) string {
 	s := base64.StdEncoding.EncodeToString([]byte(state))
-	return provider.oauth2.AuthCodeURL(s)
+
+	callback := oauth2.SetAuthURLParam("redirect_uri", callbackURL)
+
+	return provider.oauth2.AuthCodeURL(s, callback)
 }
