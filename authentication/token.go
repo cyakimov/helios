@@ -1,11 +1,13 @@
 package authentication
 
 import (
+	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"time"
 )
 
-func IssueJWT(secret string, email string, expires time.Time) (string, error) {
+// IssueJWTWithSecret issues and sign a JWT with a secret
+func IssueJWTWithSecret(secret, email string, expires time.Time) (string, error) {
 	key := []byte(secret)
 
 	// Create the Claims
@@ -18,4 +20,18 @@ func IssueJWT(secret string, email string, expires time.Time) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(key)
+}
+
+// ValidateJWTWithSecret checks JWT signing algorithm as well the signature
+func ValidateJWTWithSecret(secret, tokenString string) bool {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		// Validate the alg
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+
+		return []byte(secret), nil
+	})
+
+	return err == nil && token != nil && token.Valid
 }

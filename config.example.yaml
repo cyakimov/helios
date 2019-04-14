@@ -19,20 +19,24 @@ routes:
       paths:
         - path: /
           upstream: httpbin
-        - path: /json
-            upstream: httpbin
-            auth_enabled: false
+
+  - host: 127.0.0.1
+    http:
+      paths:
+        - path: /
+          upstream: httpbin
+          auth_enabled: false
 
 identity:
   provider: auth0
   client_id: long-hash-here
   client_secret: long-hash-here
   oauth2:
-    domain: https://yourtenant.auth0.com
-    callback: https://localhost/callback
     auth_url: https://yourtenant.auth0.com/authorize
     token_url: https://yourtenant.auth0.com/oauth/token
+    profile_url: https://yourtenant.auth0.com/userinfo
+    state_secret: long-hash-here
 
 jwt:
-  shared_secret: replace-this-with-a-long-hash
+  secret: replace-this-with-a-long-hash
   expires: 10h
