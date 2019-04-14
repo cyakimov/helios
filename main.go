@@ -76,7 +76,7 @@ func router() *mux.Router {
 	}
 
 	for _, route := range config.Routes {
-		h := router.Host(route.Host)
+		h := router.Host(route.Host).Subrouter()
 
 		for _, path := range route.HTTP.Paths {
 			upstream := upstreams[path.Upstream]
