@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/cyakimov/helios/authentication"
 	"github.com/cyakimov/helios/authentication/providers"
+	"github.com/cyakimov/helios/authorization"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
@@ -56,9 +57,9 @@ func router() *mux.Router {
 
 	auth0 := providers.NewAuth0Provider(oauth2conf)
 
-	auth := authentication.NewHeliosAuthentication(auth0, config.JWT.Secret, config.JWT.Expires)
+	authN := authentication.NewHeliosAuthentication(auth0, config.JWT.Secret, config.JWT.Expires)
 
-	router.PathPrefix("/.oauth2/callback").HandlerFunc(auth.CallbackHandler)
+	router.PathPrefix("/.oauth2/callback").HandlerFunc(authN.CallbackHandler)
 
 	for _, up := range config.Upstreams {
 		upstreamURL, err := url.Parse(up.URL)
@@ -86,10 +87,12 @@ func router() *mux.Router {
 				break
 			}
 
+			authZ := authorization.NewAuthorization(route.Rules)
+
 			if path.AuthEnabled {
-				h.PathPrefix(path.Path).Handler(auth.Middleware(upstream))
+				h.PathPrefix(path.Path).Handler(authZ.Middleware(authN.Middleware(upstream)))
 			} else {
-				h.PathPrefix(path.Path).Handler(upstream)
+				h.PathPrefix(path.Path).Handler(authZ.Middleware(upstream))
 			}
 
 		}

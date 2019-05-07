@@ -26,8 +26,9 @@ type TLSContext struct {
 }
 
 type Route struct {
-	Host string
-	HTTP struct {
+	Host  string
+	Rules []string
+	HTTP  struct {
 		Paths []struct {
 			Path        string
 			Upstream    string
