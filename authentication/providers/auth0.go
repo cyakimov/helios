@@ -54,13 +54,7 @@ func (provider Auth0Provider) GetUserProfile(r *http.Request) (OIDCProfile, erro
 		return profile, ErrProfile
 	}
 
-	defer func() {
-		if resp.Body != nil {
-			if err := resp.Body.Close(); err != nil {
-				log.Error(err)
-			}
-		}
-	}()
+	defer resp.Body.Close()
 
 	if err = json.NewDecoder(resp.Body).Decode(&profile); err != nil {
 		return profile, errors.New("auth0: cannot decode JSON profile")
