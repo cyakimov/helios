@@ -19,8 +19,6 @@ import (
 	"time"
 )
 
-const ServerName = "Helios/0.1"
-
 var (
 	configPath string
 	config     *Config
@@ -150,7 +148,10 @@ func main() {
 	defer cancel()
 	// Doesn't block if no connections, but will otherwise wait
 	// until the timeout deadline.
-	srv.Shutdown(ctx)
+	if err = srv.Shutdown(ctx); err != nil {
+		log.Error(err)
+	}
+
 	// Optionally, you could run srv.Shutdown in a goroutine and block on
 	// <-ctx.Done() if your application should wait for other services
 	// to finalize based on context cancellation.
