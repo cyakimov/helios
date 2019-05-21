@@ -77,6 +77,9 @@ func (helios Helios) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	exp := time.Now().Add(helios.jwtOpts.Expiration)
 	jwt, err := IssueJWTWithSecret(helios.jwtOpts.Secret, profile.Email, exp)
+	if err != nil {
+		log.Error(err)
+	}
 	http.SetCookie(w, &http.Cookie{
 		Name:    CookieName,
 		Value:   jwt,
@@ -86,7 +89,6 @@ func (helios Helios) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	})
 
 	http.Redirect(w, r, string(state), http.StatusFound)
-	return
 }
 
 func authenticate(jwtSecret string, r *http.Request) error {
