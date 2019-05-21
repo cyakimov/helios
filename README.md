@@ -1,5 +1,9 @@
 <h1 align="center"><img src="./docs/images/banner.png" alt="Helios - Identity-aware Proxy"></h1>
 
+[![Build Status](https://travis-ci.org/cyakimov/helios.svg?branch=master)](https://travis-ci.org/cyakimov/helios)
+[![Go Report Card](https://goreportcard.com/badge/github.com/cyakimov/helios)](https://goreportcard.com/report/github.com/cyakimov/helios)
+[![LICENSE](https://img.shields.io/github/license/pomerium/pomerium.svg)](https://github.com/pomerium/pomerium/blob/master/LICENSE)
+
 **⚠ This project is on early stage and it's not ready for production yet ⚠**
 
 Helios is an Identity & Access Proxy (IAP) that authorizes HTTP requests based on sets of rules. 
