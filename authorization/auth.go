@@ -3,7 +3,11 @@ package authorization
 import (
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
+	"github.com/google/cel-go/common/types"
+	"github.com/google/cel-go/common/types/ref"
+	"github.com/google/cel-go/interpreter/functions"
 	log "github.com/sirupsen/logrus"
+	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"net"
 	"net/http"
 	"time"
@@ -14,12 +18,34 @@ type Helios struct {
 	expressions []cel.Program
 }
 
+func inNetwork(clientIP ref.Val, network ref.Val) ref.Val {
+	snet, ok := network.Value().(string)
+	if !ok {
+		return types.False
+	}
+	sip, ok := clientIP.Value().(string)
+	if !ok {
+		return types.False
+	}
+
+	_, subnet, _ := net.ParseCIDR(snet)
+	ip := net.ParseIP(sip)
+
+	if subnet.Contains(ip) {
+		return types.True
+	}
+
+	return types.False
+}
+
 func NewAuthorization(expressions []string) *Helios {
 	env, err := cel.NewEnv(cel.Declarations(
 		decls.NewIdent("request.host", decls.String, nil),
 		decls.NewIdent("request.path", decls.String, nil),
 		decls.NewIdent("request.ip", decls.String, nil),
 		decls.NewIdent("request.time", decls.Timestamp, nil),
+		decls.NewFunction("network",
+			decls.NewInstanceOverload("network_string_string", []*exprpb.Type{decls.String, decls.String}, decls.String)),
 	))
 	if err != nil {
 		log.Fatal(err)
@@ -27,10 +53,23 @@ func NewAuthorization(expressions []string) *Helios {
 
 	programs := make([]cel.Program, 0, len(expressions))
 	for _, exp := range expressions {
-		ast, _ := env.Parse(exp)
-		p, err := env.Program(ast)
+		parsed, _ := env.Parse(exp)
+
+		ast, cerr := env.Check(parsed)
+		if cerr != nil {
+			log.Fatalf("Invalid CEL expression: %s", cerr.String())
+		}
+
+		// declare function overloads
+		funcs := cel.Functions(
+			&functions.Overload{
+				Operator: "network",
+				Binary:   inNetwork,
+			})
+
+		p, err := env.Program(ast, funcs)
 		if err != nil {
-			log.Fatal("Invalid CEL expression %q", err)
+			log.Fatalf("Error while creating CEL program: %q", err)
 		}
 
 		programs = append(programs, p)
@@ -49,7 +88,9 @@ func (h *Helios) Middleware(next http.Handler) http.Handler {
 		for _, exp := range h.expressions {
 			out, _, err := exp.Eval(context)
 			if err != nil {
-				log.Fatal(err)
+				log.Errorf("Error evaluating expression: %v", err)
+				w.WriteHeader(http.StatusForbidden)
+				return
 			}
 
 			if out.Value() == false {
@@ -71,6 +112,6 @@ func getContext(r *http.Request) map[string]interface{} {
 		"request.host": r.Host,
 		"request.path": r.RequestURI,
 		"request.ip":   ip,
-		"request.time": time.Now().Unix(),
+		"request.time": time.Now().UTC().Format(time.RFC3339),
 	}
 }
