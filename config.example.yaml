@@ -16,6 +16,7 @@ upstreams:
 routes:
   - host: localhost
     rules:
+      - request.ip.network("127.0.0.1/32")
       - request.host == 'localhost'
     http:
       paths:
