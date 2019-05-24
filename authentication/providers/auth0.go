@@ -5,17 +5,20 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"net/http"
+
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
-	"net/http"
 )
 
+// Auth0Provider represents an Auth0 instance
 type Auth0Provider struct {
 	OAuth2
 	oauth2     oauth2.Config
 	profileURL string
 }
 
+// NewAuth0Provider creates a new Auth0 identity provider with a given config
 func NewAuth0Provider(config OAuth2Config) OAuth2 {
 	return Auth0Provider{
 		profileURL: config.ProfileURL,
@@ -32,6 +35,7 @@ func NewAuth0Provider(config OAuth2Config) OAuth2 {
 	}
 }
 
+// GetUserProfile fetches user info from Auth0
 func (provider Auth0Provider) GetUserProfile(r *http.Request) (OIDCProfile, error) {
 	var profile OIDCProfile
 	code := r.URL.Query().Get("code")
@@ -67,7 +71,9 @@ func (provider Auth0Provider) GetUserProfile(r *http.Request) (OIDCProfile, erro
 	return profile, nil
 }
 
+// GetLoginURL returns OAuth 2 login endpoint used to redirect users
 func (provider Auth0Provider) GetLoginURL(callbackURL string, state string) string {
+	// @todo encrypt state
 	s := base64.StdEncoding.EncodeToString([]byte(state))
 
 	callback := oauth2.SetAuthURLParam("redirect_uri", callbackURL)

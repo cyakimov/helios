@@ -32,7 +32,6 @@ func init() {
 
 	flag.StringVar(&configPath, "config", "default.yaml", "Configuration file path")
 	flag.BoolVar(&debugMode, "verbose", false, "DEBUG level logging")
-	flag.Parse()
 
 	if debugMode {
 		log.SetLevel(log.DebugLevel)
@@ -100,6 +99,8 @@ func router() *mux.Router {
 }
 
 func main() {
+	flag.Parse()
+
 	cb, err := ioutil.ReadFile(configPath)
 	if err != nil {
 		log.Fatalf("Error loading configuration: %v", err)
