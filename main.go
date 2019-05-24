@@ -5,18 +5,19 @@ import (
 	"crypto/tls"
 	"flag"
 	"fmt"
-	"github.com/cyakimov/helios/authentication"
-	"github.com/cyakimov/helios/authentication/providers"
-	"github.com/cyakimov/helios/authorization"
-	"github.com/gorilla/mux"
-	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
 	"os/signal"
 	"time"
+
+	"github.com/cyakimov/helios/authentication"
+	"github.com/cyakimov/helios/authentication/providers"
+	"github.com/cyakimov/helios/authorization"
+	"github.com/gorilla/mux"
+	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v3"
 )
 
 var (
@@ -52,9 +53,15 @@ func router() *mux.Router {
 		ProfileURL:   config.Identity.OAuth2.ProfileURL,
 	}
 
-	auth0 := providers.NewAuth0Provider(oauth2conf)
+	var provider providers.OAuth2
+	switch config.Identity.Provider {
+	case "auth0":
+		provider = providers.NewAuth0Provider(oauth2conf)
+	default:
+		log.Fatalf("%q provider is not supported", config.Identity.Provider)
+	}
 
-	authN := authentication.NewHeliosAuthentication(auth0, config.JWT.Secret, config.JWT.Expires)
+	authN := authentication.NewHeliosAuthentication(provider, config.JWT.Secret, config.JWT.Expires)
 
 	router.PathPrefix("/.oauth2/callback").HandlerFunc(authN.CallbackHandler)
 

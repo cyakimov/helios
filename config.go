@@ -41,7 +41,6 @@ type Route struct {
 	}
 }
 
-
 // Upstream represents a single proxy upstream
 type Upstream struct {
 	Name           string `yaml:"name"`
