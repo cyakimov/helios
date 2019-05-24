@@ -4,6 +4,7 @@ import (
 	"time"
 )
 
+// Config structure used to configure Helios
 type Config struct {
 	Server    Server     `yaml:"server"`
 	Upstreams []Upstream `yaml:"upstreams"`
@@ -12,6 +13,7 @@ type Config struct {
 	JWT       JWT        `yaml:"jwt"`
 }
 
+// Server structure is used to configure the HTTP(S) server
 type Server struct {
 	ListenIP    string        `yaml:"listen_ip"`
 	ListenPort  int           `yaml:"listen_port"`
@@ -20,11 +22,13 @@ type Server struct {
 	TLSContext  TLSContext    `yaml:"tls_context"`
 }
 
+// TLSContext structure is used to configure TLS for the server
 type TLSContext struct {
 	CertificatePath string `yaml:"certificate_path"`
 	PrivateKeyPath  string `yaml:"private_key_path"`
 }
 
+// Route represents a route configuration
 type Route struct {
 	Host  string
 	Rules []string
@@ -37,12 +41,15 @@ type Route struct {
 	}
 }
 
+
+// Upstream represents a single proxy upstream
 type Upstream struct {
 	Name           string `yaml:"name"`
 	URL            string `yaml:"url"`
 	ConnectTimeout time.Duration
 }
 
+// Identity provider configuration
 type Identity struct {
 	Provider     string `yaml:"provider"`
 	ClientID     string `yaml:"client_id"`
@@ -54,11 +61,13 @@ type Identity struct {
 	}
 }
 
+// JWT token configuration
 type JWT struct {
 	Secret  string
 	Expires time.Duration
 }
 
+// UnmarshalYAML parses upstream configuration from a YAML file
 func (c *Upstream) UnmarshalYAML(unmarshal func(v interface{}) error) error {
 	buf := struct {
 		ConnectTimeout string `yaml:"connect_timeout"`
@@ -82,6 +91,7 @@ func (c *Upstream) UnmarshalYAML(unmarshal func(v interface{}) error) error {
 	return nil
 }
 
+// UnmarshalYAML parses JWT configuration from a YAML file
 func (c *JWT) UnmarshalYAML(unmarshal func(v interface{}) error) error {
 	buf := struct {
 		Secret  string `yaml:"secret"`
@@ -103,6 +113,7 @@ func (c *JWT) UnmarshalYAML(unmarshal func(v interface{}) error) error {
 	return nil
 }
 
+// UnmarshalYAML parses server configuration from a YAML file
 func (c *Server) UnmarshalYAML(unmarshal func(v interface{}) error) error {
 	var buf struct {
 		ListenIP    string     `yaml:"listen_ip"`

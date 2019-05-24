@@ -10,6 +10,7 @@ import (
 	"time"
 )
 
+// ReverseProxyConfig configuration settings for a proxy instance
 type ReverseProxyConfig struct {
 	ConnectTimeout time.Duration
 	Timeout        time.Duration
@@ -28,6 +29,7 @@ func singleJoiningSlash(a, b string) string {
 	return a + b
 }
 
+// NewSingleHostReverseProxy creates a new reverse proxy instance
 func NewSingleHostReverseProxy(target *url.URL, conf ReverseProxyConfig) http.Handler {
 	targetQuery := target.RawQuery
 	director := func(req *http.Request) {

@@ -2,8 +2,9 @@ package authentication
 
 import (
 	"fmt"
-	"github.com/dgrijalva/jwt-go"
 	"time"
+
+	"github.com/dgrijalva/jwt-go"
 )
 
 // IssueJWTWithSecret issues and sign a JWT with a secret

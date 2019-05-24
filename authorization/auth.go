@@ -13,6 +13,7 @@ import (
 	"time"
 )
 
+// Helios represents an authorization service instance
 type Helios struct {
 	cel         cel.Env
 	expressions []cel.Program
@@ -38,6 +39,7 @@ func inNetwork(clientIP ref.Val, network ref.Val) ref.Val {
 	return types.False
 }
 
+// NewAuthorization creates a new authorization service with a given set of rules
 func NewAuthorization(expressions []string) *Helios {
 	env, err := cel.NewEnv(cel.Declarations(
 		decls.NewIdent("request.host", decls.String, nil),
@@ -81,6 +83,7 @@ func NewAuthorization(expressions []string) *Helios {
 	}
 }
 
+// Middleware evaluates authorization rules against a request
 func (h *Helios) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		context := getContext(r)

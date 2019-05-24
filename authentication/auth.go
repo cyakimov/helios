@@ -3,40 +3,48 @@ package authentication
 import (
 	"encoding/base64"
 	"errors"
-	"github.com/cyakimov/helios/authentication/providers"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 	"time"
+
+	"github.com/cyakimov/helios/authentication/providers"
+	log "github.com/sirupsen/logrus"
 )
 
+// CookieName is the name of the cookie that contains the JWT token
 const CookieName = "Helios_Authorization"
+// HeaderName is the name of the cookie that contains the JWT token
 const HeaderName = "Helios-Jwt-Assertion"
 
+// ErrUnauthorized is returned by the middleware when a request is not authorized
 var ErrUnauthorized = errors.New("unauthorized request")
 
-type JWTOpts struct {
+// JWTConfig JWT configuration
+type JWTConfig struct {
 	Secret     string
 	Expiration time.Duration
 }
 
+// Helios represents a middleware instance that can authenticate requests
 type Helios struct {
-	provider providers.OAuth2
-	jwtOpts  JWTOpts
+	provider  providers.OAuth2
+	jwtConfig JWTConfig
 }
 
+// NewHeliosAuthentication creates a new authentication middleware instance
 func NewHeliosAuthentication(provider providers.OAuth2, jwtSecret string, jwtExpiration time.Duration) Helios {
 	return Helios{
 		provider: provider,
-		jwtOpts: JWTOpts{
+		jwtConfig: JWTConfig{
 			Secret:     jwtSecret,
 			Expiration: jwtExpiration,
 		},
 	}
 }
 
+// Middleware checks if a request is authentic
 func (helios Helios) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if err := authenticate(helios.jwtOpts.Secret, r); err != nil {
+		if err := authenticate(helios.jwtConfig.Secret, r); err != nil {
 
 			// dynamically build callback URL based on current domain
 			callback := "https://" + r.Host + "/.oauth2/callback"
@@ -49,16 +57,17 @@ func (helios Helios) Middleware(next http.Handler) http.Handler {
 			return
 		}
 
-		log.Println(r.RequestURI)
 		// Call the next handler, which can be another middleware in the chain, or the final handler.
 		next.ServeHTTP(w, r)
 	})
 }
 
+// CallbackHandler handles OAuth 2 callback flow
 func (helios Helios) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	// decode and decrypt state to recover original request url
 	encodedState := r.URL.Query().Get("state")
 
+	// @todo decrypt state (see GetLoginURL)
 	state, err := base64.StdEncoding.DecodeString(encodedState)
 	if err != nil {
 		log.Error(err)
@@ -75,8 +84,8 @@ func (helios Helios) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Debugf("Authorized. Redirecting to %s", string(state))
 
-	exp := time.Now().Add(helios.jwtOpts.Expiration)
-	jwt, err := IssueJWTWithSecret(helios.jwtOpts.Secret, profile.Email, exp)
+	exp := time.Now().Add(helios.jwtConfig.Expiration)
+	jwt, err := IssueJWTWithSecret(helios.jwtConfig.Secret, profile.Email, exp)
 	if err != nil {
 		log.Error(err)
 	}
