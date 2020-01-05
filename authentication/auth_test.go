@@ -16,14 +16,14 @@ type mockProvider struct {
 	mock.Mock
 }
 
-func (m mockProvider) FetchUser(r *http.Request) (providers.UserInfo, error) {
+func (m *mockProvider) FetchUser(r *http.Request) (providers.UserInfo, error) {
 	args := m.Called(r)
 	profile := args.Get(0)
 
 	return profile.(providers.UserInfo), nil
 }
 
-func (m mockProvider) GetLoginURL(callbackURL, state string) string {
+func (m *mockProvider) GetLoginURL(callbackURL, state string) string {
 	args := m.Called(callbackURL, state)
 	return args.String(0)
 }
