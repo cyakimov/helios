@@ -26,7 +26,8 @@ and [Cloud IAP](https://cloud.google.com/iap/).
 Beyond that, I started this project off for 2 reasons:
 
 1. I wanted to exercise and continue improving my Go skills
-2. I'm very interested in BeyondCorp. I believe it's the future of enterprise security.
+2. I'm interested in BeyondCorp, Google's implementation of [Zero Trust](https://wikipedia.org/wiki/Zero_Trust). I 
+believe Zero Trust is the future of Enterprise Security.
 
 ## Install
 First, install Go, set your `GOPATH`, and make sure `$GOPATH/bin` is on your PATH.

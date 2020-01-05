@@ -28,7 +28,7 @@ routes:
       paths:
         - path: /
           upstream: httpbin
-          auth_enabled: false
+          authentication: false
 
 identity:
   provider: auth0

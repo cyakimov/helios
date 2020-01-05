@@ -86,6 +86,7 @@ func NewAuthorization(expressions []string) *Helios {
 // Middleware evaluates authorization rules against a request
 func (h *Helios) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Debugf("Authorizing request %q", r.URL)
 		context := getContext(r)
 
 		for _, exp := range h.expressions {
