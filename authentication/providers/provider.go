@@ -14,14 +14,14 @@ type OAuth2Config struct {
 	ProfileURL   string
 }
 
-// OIDCProfile represents a basic Open ID Connect profile
-type OIDCProfile struct {
+// UserInfo represents a Open ID Connect user info
+type UserInfo struct {
 	Email string
 }
 
-// OAuth2 provider interface
-type OAuth2 interface {
-	GetUserProfile(r *http.Request) (OIDCProfile, error)
+// OAuth2Provider provider interface
+type OAuth2Provider interface {
+	FetchUser(r *http.Request) (UserInfo, error)
 	GetLoginURL(callbackURL, state string) string
 }
 

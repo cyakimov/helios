@@ -33,12 +33,6 @@ func init() {
 
 	flag.StringVar(&configPath, "config", "default.yaml", "Configuration file path")
 	flag.BoolVar(&debugMode, "verbose", false, "DEBUG level logging")
-
-	if debugMode {
-		log.SetLevel(log.DebugLevel)
-	} else {
-		log.SetLevel(log.InfoLevel)
-	}
 }
 
 func router() *mux.Router {
@@ -53,7 +47,7 @@ func router() *mux.Router {
 		ProfileURL:   config.Identity.OAuth2.ProfileURL,
 	}
 
-	var provider providers.OAuth2
+	var provider providers.OAuth2Provider
 	switch config.Identity.Provider {
 	case "auth0":
 		provider = providers.NewAuth0Provider(oauth2conf)
@@ -63,7 +57,7 @@ func router() *mux.Router {
 
 	authN := authentication.NewHeliosAuthentication(provider, config.JWT.Secret, config.JWT.Expires)
 
-	router.PathPrefix("/.oauth2/callback").HandlerFunc(authN.CallbackHandler)
+	router.PathPrefix("/.well-known/callback").HandlerFunc(authN.CallbackHandler)
 
 	for _, up := range config.Upstreams {
 		upstreamURL, err := url.Parse(up.URL)
@@ -93,8 +87,8 @@ func router() *mux.Router {
 
 			authZ := authorization.NewAuthorization(route.Rules)
 
-			if path.AuthEnabled {
-				h.PathPrefix(path.Path).Handler(authZ.Middleware(authN.Middleware(upstream)))
+			if path.Authentication {
+				h.PathPrefix(path.Path).Handler(authN.Middleware(authZ.Middleware(upstream)))
 			} else {
 				h.PathPrefix(path.Path).Handler(authZ.Middleware(upstream))
 			}
@@ -107,6 +101,11 @@ func router() *mux.Router {
 
 func main() {
 	flag.Parse()
+	if debugMode {
+		log.SetLevel(log.DebugLevel)
+	} else {
+		log.SetLevel(log.InfoLevel)
+	}
 
 	cb, err := ioutil.ReadFile(configPath)
 	if err != nil {

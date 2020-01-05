@@ -34,9 +34,9 @@ type Route struct {
 	Rules []string
 	HTTP  struct {
 		Paths []struct {
-			Path        string
-			Upstream    string
-			AuthEnabled bool `yaml:"auth_enabled"`
+			Path           string
+			Upstream       string
+			Authentication bool `yaml:"authentication"`
 		}
 	}
 }

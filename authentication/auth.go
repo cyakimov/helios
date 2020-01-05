@@ -12,6 +12,7 @@ import (
 
 // CookieName is the name of the cookie that contains the JWT token
 const CookieName = "Helios_Authorization"
+
 // HeaderName is the name of the cookie that contains the JWT token
 const HeaderName = "Helios-Jwt-Assertion"
 
@@ -26,12 +27,12 @@ type JWTConfig struct {
 
 // Helios represents a middleware instance that can authenticate requests
 type Helios struct {
-	provider  providers.OAuth2
+	provider  providers.OAuth2Provider
 	jwtConfig JWTConfig
 }
 
 // NewHeliosAuthentication creates a new authentication middleware instance
-func NewHeliosAuthentication(provider providers.OAuth2, jwtSecret string, jwtExpiration time.Duration) Helios {
+func NewHeliosAuthentication(provider providers.OAuth2Provider, jwtSecret string, jwtExpiration time.Duration) Helios {
 	return Helios{
 		provider: provider,
 		jwtConfig: JWTConfig{
@@ -44,10 +45,15 @@ func NewHeliosAuthentication(provider providers.OAuth2, jwtSecret string, jwtExp
 // Middleware checks if a request is authentic
 func (helios Helios) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Debugf("Authenticating request %q", r.URL)
 		if err := authenticate(helios.jwtConfig.Secret, r); err != nil {
-
+			log.Debugf("Authentication failed for %q", r.URL)
 			// dynamically build callback URL based on current domain
-			callback := "https://" + r.Host + "/.oauth2/callback"
+			scheme := "http"
+			if r.TLS != nil {
+				scheme = "https"
+			}
+			callback := scheme + "://" + r.Host + "/.well-known/callback"
 
 			url := helios.provider.GetLoginURL(callback, r.RequestURI)
 
@@ -62,8 +68,9 @@ func (helios Helios) Middleware(next http.Handler) http.Handler {
 	})
 }
 
-// CallbackHandler handles OAuth 2 callback flow
+// CallbackHandler handles OAuth2 callback flow
 func (helios Helios) CallbackHandler(w http.ResponseWriter, r *http.Request) {
+	log.Debug("Handling callback request")
 	// decode and decrypt state to recover original request url
 	encodedState := r.URL.Query().Get("state")
 
@@ -75,7 +82,7 @@ func (helios Helios) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	profile, err := helios.provider.GetUserProfile(r)
+	profile, err := helios.provider.FetchUser(r)
 	if err != nil {
 		log.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -101,7 +108,7 @@ func (helios Helios) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func authenticate(jwtSecret string, r *http.Request) error {
-	// look for Token in both Cookies and Headers
+	// look for Token in Cookies and Headers
 	cookie, err := r.Cookie(CookieName)
 	token := r.Header.Get(HeaderName)
 
@@ -109,7 +116,7 @@ func authenticate(jwtSecret string, r *http.Request) error {
 		return ErrUnauthorized
 	}
 
-	if token == "" {
+	if token == "" && cookie != nil {
 		token = cookie.Value
 	}
 

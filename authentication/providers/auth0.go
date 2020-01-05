@@ -13,13 +13,13 @@ import (
 
 // Auth0Provider represents an Auth0 instance
 type Auth0Provider struct {
-	OAuth2
+	OAuth2Provider
 	oauth2     oauth2.Config
 	profileURL string
 }
 
 // NewAuth0Provider creates a new Auth0 identity provider with a given config
-func NewAuth0Provider(config OAuth2Config) OAuth2 {
+func NewAuth0Provider(config OAuth2Config) OAuth2Provider {
 	return Auth0Provider{
 		profileURL: config.ProfileURL,
 		oauth2: oauth2.Config{
@@ -35,13 +35,17 @@ func NewAuth0Provider(config OAuth2Config) OAuth2 {
 	}
 }
 
-// GetUserProfile fetches user info from Auth0
-func (provider Auth0Provider) GetUserProfile(r *http.Request) (OIDCProfile, error) {
-	var profile OIDCProfile
+// FetchUser fetches user info from Auth0
+func (provider Auth0Provider) FetchUser(r *http.Request) (UserInfo, error) {
+	var profile UserInfo
 	code := r.URL.Query().Get("code")
 
+	scheme := "http"
+	if r.TLS != nil {
+		scheme = "https"
+	}
 	// Auth0 requires callback URL
-	url := "https://" + r.Host + "/" + r.URL.Path
+	url := scheme + "://" + r.Host + r.URL.Path
 	callback := oauth2.SetAuthURLParam("redirect_uri", url)
 
 	// get access token
