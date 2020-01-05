@@ -97,14 +97,26 @@ func (helios Helios) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		log.Error(err)
 	}
 	http.SetCookie(w, &http.Cookie{
-		Name:    CookieName,
-		Value:   jwt,
-		Expires: exp,
-		Path:    "/",
-		Secure:  true,
+		Name:     CookieName,
+		Value:    jwt,
+		Expires:  exp,
+		Path:     "/",
+		Secure:   true,
+		HttpOnly: true,
 	})
 
 	http.Redirect(w, r, string(state), http.StatusFound)
+}
+
+func (helios Helios) Logout(w http.ResponseWriter, r *http.Request) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     CookieName,
+		Value:    "",
+		Path:     "/",
+		Expires:  time.Unix(0, 0),
+		Secure:   true,
+		HttpOnly: true,
+	})
 }
 
 func authenticate(jwtSecret string, r *http.Request) error {

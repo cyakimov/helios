@@ -58,6 +58,7 @@ func router() *mux.Router {
 	authN := authentication.NewHeliosAuthentication(provider, config.JWT.Secret, config.JWT.Expires)
 
 	router.PathPrefix("/.well-known/callback").HandlerFunc(authN.CallbackHandler)
+	router.PathPrefix("/.well-known/logout").HandlerFunc(authN.Logout)
 
 	for _, up := range config.Upstreams {
 		upstreamURL, err := url.Parse(up.URL)
