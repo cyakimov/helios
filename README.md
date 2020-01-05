@@ -12,7 +12,7 @@ in Zero-Trust networks.
 
 In a nutshell, with Helios you can:
 
-* Identify users using existing identity providers like Google, Auth0, Okta, etc.
+* Identify users using existing identity providers like Google, Auth0, Azure AD, etc.
 * Secure and authenticate access to any domain or path 
 * Configure authorization policies using [CEL](https://github.com/google/cel-spec) expressions
 * Use Helios as gateway or reverse proxy 
@@ -25,17 +25,14 @@ and [Cloud IAP](https://cloud.google.com/iap/).
 
 Beyond that, I started this project off for 2 reasons:
 
-1. I wanted to exercise and continue improving my Go skills
+1. I wanted to exercise and continue improving my Go skills.
 2. I'm interested in BeyondCorp, Google's implementation of [Zero Trust](https://wikipedia.org/wiki/Zero_Trust). I 
 believe Zero Trust is the future of Enterprise Security.
+3. Last but not least, because it's fun! 
 
 ## Install
-First, install Go, set your `GOPATH`, and make sure `$GOPATH/bin` is on your PATH.
 
-```shell
-$ export GOPATH="$HOME/go"
-$ export PATH="$PATH:$GOPATH/bin"
-```
+[Install Go](https://golang.org/doc/install).
 
 Next download the project and build the binary file.
 
@@ -58,10 +55,10 @@ helios -help
 ### Configuring authorization rules
 
 The supported condition attributes are based on details about the request (e.g., its timestamp, originating IP address
-, etc).
-Examples and a description attribute types are described below.
+, identity, etc.).
+Examples and a description of attribute types are described below.
 
-### Request Attributes
+#### Available Attributes
 
 - `request.host`
 - `request.path`
@@ -118,7 +115,7 @@ request.path.startsWith("/admin")
 
 ### Prerequisites
 
- - Go 1.12
+ - Go 1.13
  - [mkcert](https://github.com/FiloSottile/mkcert)
 
 ### Environment Setup
@@ -146,3 +143,14 @@ Run the program
 ```shell
 go run . -config config.example.yaml
 ```
+
+## Roadmap 🗺
+
+| Status | Milestone |
+| :---: | :--- |
+| 🚀 | Expression engine |
+| ❌ | Support popular identity providers |
+| ❌ | Use templates for error pages |
+| ❌ | Export prometheus metrics |
+| ❌ | Create a Github page |
+| ❌ | Dynamic policies |
