@@ -51,6 +51,8 @@ func router() *mux.Router {
 	switch config.Identity.Provider {
 	case "auth0":
 		provider = providers.NewAuth0Provider(oauth2conf)
+	case "google":
+		provider = providers.NewGoogleProvider(oauth2conf)
 	default:
 		log.Fatalf("%q provider is not supported", config.Identity.Provider)
 	}
