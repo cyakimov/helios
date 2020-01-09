@@ -2,6 +2,7 @@ package providers
 
 import (
 	"errors"
+	"github.com/dgrijalva/jwt-go"
 	"net/http"
 )
 
@@ -25,6 +26,11 @@ type OAuth2Provider interface {
 	GetLoginURL(callbackURL, state string) string
 }
 
+type OIDClaims struct {
+	jwt.StandardClaims
+	Email string `json:"email,omitempty"`
+}
+
 // ErrCodeExchange is returned when the auth code exchange failed
 var ErrCodeExchange = errors.New("error on code exchange")
 
@@ -33,3 +39,9 @@ var ErrProfile = errors.New("error getting user profile")
 
 // ErrNoEmail is returned when no email is present in the OIDC profile
 var ErrNoEmail = errors.New("no email found in user profile")
+
+// ErrJWTParse is returned when a given JWT is invalid
+var ErrJWTParse = errors.New("cannot parse jwt")
+
+// ErrJWTClaims is returned when required claims are missing
+var ErrJWTClaims = errors.New("invalid jwt claims")

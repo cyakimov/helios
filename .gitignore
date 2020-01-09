@@ -14,3 +14,5 @@ helios
 
 *.pem
 config.yaml
+config.*.yaml
+!config.example.yaml
