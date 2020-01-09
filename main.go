@@ -14,6 +14,9 @@ import (
 
 	"github.com/cyakimov/helios/authentication"
 	"github.com/cyakimov/helios/authentication/providers"
+	"github.com/cyakimov/helios/authentication/providers/auth0"
+	"github.com/cyakimov/helios/authentication/providers/azuread"
+	"github.com/cyakimov/helios/authentication/providers/google"
 	"github.com/cyakimov/helios/authorization"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
@@ -49,10 +52,12 @@ func router() *mux.Router {
 
 	var provider providers.OAuth2Provider
 	switch config.Identity.Provider {
+	case "aad":
+		provider = azuread.NewAzureADProvider(oauth2conf)
 	case "auth0":
-		provider = providers.NewAuth0Provider(oauth2conf)
+		provider = auth0.NewAuth0Provider(oauth2conf)
 	case "google":
-		provider = providers.NewGoogleProvider(oauth2conf)
+		provider = google.NewGoogleProvider(oauth2conf)
 	default:
 		log.Fatalf("%q provider is not supported", config.Identity.Provider)
 	}
